@@ -47,13 +47,13 @@ func init() {
 
 var usage string = `Github release tool.
 Usage:
-	gh-release <user/repo> <tag> <files>
+	gh-release <user/repo> <tag> <branch> <description> <files>
 
 <files> can be specified using glob patterns.
 `
 
 func main() {
-	if len(os.Args) < 4 {
+	if len(os.Args) < 6 {
 		log.Fatal(usage)
 	}
 
@@ -72,20 +72,22 @@ Please refer to https://help.github.com/articles/creating-an-access-token-for-co
 	GithubRepo = userRepo[1]
 	GithubAPIEndpoint = fmt.Sprintf("https://api.github.com/repos/%s/%s", GithubUser, GithubRepo)
 
-	filepaths, err := filepath.Glob(os.Args[3])
+	filepaths, err := filepath.Glob(os.Args[5])
 	if err != nil {
 		log.Fatalf("Error: Invalid glob pattern: %s\n", os.Args[3])
 	}
 
 	tag := os.Args[2]
+	branch := os.Args[3]
+	desc := os.Args[4]
 
-	CreateRelease(tag, filepaths)
+	CreateRelease(tag, branch, desc, filepaths)
 	log.Println("Done")
 }
 
 // Creates a Github Release, attaching the given files as release assets
 // If a release already exist, up in Github, this function will attempt to attach the given files to it
-func CreateRelease(tag string, filepaths []string) {
+func CreateRelease(tag, branch, desc string, filepaths []string) {
 	endpoint := fmt.Sprintf("%s/releases", GithubAPIEndpoint)
 
 	release := Release{
@@ -93,8 +95,8 @@ func CreateRelease(tag string, filepaths []string) {
 		Name:       tag,
 		Prerelease: false,
 		Draft:      false,
-		Branch:     "master",
-		Body:       "Changelog (TODO)",
+		Branch:     branch,
+		Body:       desc,
 	}
 
 	releaseData, err := json.Marshal(release)
@@ -150,18 +152,6 @@ func CreateRelease(tag string, filepaths []string) {
 		}(i)
 	}
 	wg.Wait()
-}
-
-// Calculates md5, sha1 and sha512 hashes for each given file
-func HashFiles(files []string) (map[string]string, error) {
-	return nil, nil
-}
-
-// Generates release changelog by comparing the tag provided, against the latest tag pushed up to Github
-func changelog(tag string) string {
-	endpoint := fmt.Sprintf("%s/commits", GithubAPIEndpoint)
-	log.Println(endpoint)
-	return ""
 }
 
 func fileSize(file *os.File) (int64, error) {
