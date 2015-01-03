@@ -1,14 +1,16 @@
 # github-release
 
-Extremely simple and opinionated Github release tool
-
-* Prepopulates release name for you
-* Generates Changelog using commit history, and adds it to release description
-* Generates crypto hashes of your files, and adds them to release description 
+Yet another github release tool. This one, though, is much more minimalistic.
 
 ### Usage
 
-`$ gh-release hooklift/stacks v1.0.0 files...`
+`
+Github release tool.
+Usage:
+	gh-release <user/repo> <tag> <branch> <description> <files>
+
+<files> can be specified using glob patterns.
+`
 
 
-### Example
+### Examples
