@@ -2,8 +2,6 @@
 
 Yet another github release tool. This one, though, is much more minimalistic.
 
-### Usage
-
 ```
 Github release tool.
 Usage:
