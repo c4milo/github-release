@@ -25,6 +25,7 @@ var (
 )
 
 type Release struct {
+	UploadURL  string `json:"upload_url,omitempty"`
 	TagName    string `json:"tag_name"`
 	Branch     string `json:"target_commitish"`
 	Name       string `json:"name"`
@@ -64,7 +65,7 @@ func main() {
 
 	if GithubToken == "" {
 		log.Fatal(`Error: GITHUB_TOKEN environment variable is not set.
-																																																Please refer to https://help.github.com/articles/creating-an-access-token-for-command-line-use/ for more help\n`)
+Please refer to https://help.github.com/articles/creating-an-access-token-for-command-line-use/ for more help\n`)
 	}
 
 	GithubUser = userRepo[0]
@@ -83,13 +84,13 @@ func main() {
 }
 
 // Creates a Github Release, attaching the given files as release assets
-// If a release already exist up in Github, this function will attempt to attach the given files
+// If a release already exist, up in Github, this function will attempt to attach the given files to it
 func CreateRelease(tag string, filepaths []string) {
 	endpoint := fmt.Sprintf("%s/releases", GithubAPIEndpoint)
 
 	release := Release{
 		TagName:    tag,
-		Name:       "Release " + tag,
+		Name:       tag,
 		Prerelease: false,
 		Draft:      false,
 		Branch:     "master",
@@ -103,16 +104,26 @@ func CreateRelease(tag string, filepaths []string) {
 
 	releaseBuffer := bytes.NewBuffer(releaseData)
 
-	err = doRequest("POST", endpoint, "application/json", releaseBuffer, int64(releaseBuffer.Len()))
+	data, err := doRequest("POST", endpoint, "application/json", releaseBuffer, int64(releaseBuffer.Len()))
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	// Gets the release Upload URL from the returned JSON data
+	err = json.Unmarshal(data, &release)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Upload URL comes like this https://uploads.github.com/repos/octocat/Hello-World/releases/1/assets{?name}
+	// So we need to remove the {?name} part
+	uploadURL := strings.Split(release.UploadURL, "{")[0]
 
 	var wg sync.WaitGroup
 	for i := range filepaths {
 		wg.Add(1)
 		func(index int) {
-			file, err := os.Open(filepaths[i]) // For read access.
+			file, err := os.Open(filepaths[i])
 			if err != nil {
 				log.Printf("Error: %s\n", err.Error())
 				return
@@ -125,10 +136,16 @@ func CreateRelease(tag string, filepaths []string) {
 				return
 			}
 
-			err = doRequest("POST", endpoint, "application/octet-stream", file, size)
+			body, err := doRequest("POST", uploadURL+"?name="+file.Name(), "application/octet-stream", file, size)
 			if err != nil {
 				log.Printf("Error: %s\n", err.Error())
 			}
+
+			if DEBUG {
+				log.Println("========= UPLOAD RESPONSE ===========")
+				log.Println(string(body[:]))
+			}
+
 			wg.Done()
 		}(i)
 	}
@@ -156,10 +173,10 @@ func fileSize(file *os.File) (int64, error) {
 }
 
 // Sends HTTP request to Github API
-func doRequest(method, url, contentType string, body io.Reader, bodySize int64) error {
-	req, err := http.NewRequest(method, url, body)
+func doRequest(method, url, contentType string, reqBody io.Reader, bodySize int64) ([]byte, error) {
+	req, err := http.NewRequest(method, url, reqBody)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", GithubToken))
@@ -188,18 +205,19 @@ func doRequest(method, url, contentType string, body io.Reader, bodySize int64) 
 	}
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("Github returned an error:\n Code: %s. \n Body: %s", resp.Status, body)
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return nil, fmt.Errorf("Github returned an error:\n Code: %s. \n Body: %s", resp.Status, respBody)
+	}
+
+	return respBody, nil
 }
