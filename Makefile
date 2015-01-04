@@ -3,7 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 NAME := github-release
-VERSION := v1.0.4
+VERSION := v1.0.5
 
 build:
 	go build -ldflags "-X main.Version $(VERSION)"
