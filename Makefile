@@ -1,6 +1,9 @@
 NAME := github-release
 VERSION := v1.0.4
 
+build:
+	go build -ldflags "-X main.Version $(VERSION)"
+
 compile:
 	@rm -rf build/
 	@gox -ldflags "-X main.Version $(VERSION)" \
@@ -35,4 +38,4 @@ release: dist
 	github-release c4milo/github-release $(VERSION) "$$(git rev-parse --abbrev-ref HEAD)" "**Changelog**<br/>$$changelog" 'dist/*'; \
 	git pull
 
-.PHONY: compile install deps dist release
+.PHONY: build compile install deps dist release
