@@ -11,7 +11,8 @@ compile:
 	-os="linux" \
 	-os="windows" \
 	-os="solaris" \
-	-output "build/{{.Dir}}_$(VERSION)_{{.OS}}_{{.Arch}}/$(NAME)"
+	-output "build/{{.Dir}}_$(VERSION)_{{.OS}}_{{.Arch}}/$(NAME)" \
+	./...
 
 install:
 	go install -ldflags "-X main.Version $(VERSION)"
@@ -35,7 +36,7 @@ release: dist
 	comparison="$$latest_tag..HEAD"; \
 	if [ -z "$$latest_tag" ]; then comparison=""; fi; \
 	changelog=$$(git log $$comparison --oneline --no-merges --reverse); \
-	github-release c4milo/github-release $(VERSION) "$$(git rev-parse --abbrev-ref HEAD)" "**Changelog**<br/>$$changelog" 'dist/*'; \
+	github-release c4milo/$(NAME) $(VERSION) "$$(git rev-parse --abbrev-ref HEAD)" "**Changelog**<br/>$$changelog" 'dist/*'; \
 	git pull
 
 .PHONY: build compile install deps dist release
