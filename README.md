@@ -1,6 +1,6 @@
 # github-release
 
-Yet another github release command line tool. This one, though, is much more minimalistic, cross platform and simple.
+Yet another Github release command line tool. This one, though, is much more minimalistic, cross platform and simple.
 
 ```
 Github release tool.
