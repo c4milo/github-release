@@ -1,5 +1,5 @@
 NAME := github-release
-VERSION := v1.0.3
+VERSION := v1.0.4
 
 compile:
 	@rm -rf build/
@@ -13,7 +13,7 @@ compile:
 install:
 	go install -ldflags "-X main.Version $(VERSION)"
 
-deps: 
+deps:
 	go get github.com/c4milo/github-release
 	go get github.com/mitchellh/gox
 
@@ -28,11 +28,11 @@ dist: compile
 	done
 
 release: dist
-	latest_tag=$$(git describe --tags `git rev-list --tags --max-count=1`); \
-		   comparison="$$latest_tag..HEAD"; \
-		   if [ -z "$$latest_tag" ]; then comparison=""; fi; \
-		   changelog=$$(git log $$comparison --oneline --no-merges --reverse); \
-		   github-release c4milo/github-release $(VERSION) "$$(git rev-parse --abbrev-ref HEAD)" "**Changelog**<br/>$$changelog" 'dist/*'; \
-		   git pull
+	@latest_tag=$$(git describe --tags `git rev-list --tags --max-count=1`); \
+	comparison="$$latest_tag..HEAD"; \
+	if [ -z "$$latest_tag" ]; then comparison=""; fi; \
+	changelog=$$(git log $$comparison --oneline --no-merges --reverse); \
+	github-release c4milo/github-release $(VERSION) "$$(git rev-parse --abbrev-ref HEAD)" "**Changelog**<br/>$$changelog" 'dist/*'; \
+	git pull
 
 .PHONY: compile install deps dist release
