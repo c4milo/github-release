@@ -3,11 +3,14 @@
 Yet another Github release command line tool. This one, though, is much more minimalistic and simple.
 
 ```
-Github release tool.
+Github command line release tool.
 Usage:
-	github-release <user/repo> <tag> <branch> <description> <files>
+	gh-release <user/repo> <tag> <branch> <description> <files>
 
-<files> can be specified using glob patterns.
+	<files> can be specified using glob patterns.
+
+Options:
+	-version: Displays version
 ```
 
 ### Requirements
