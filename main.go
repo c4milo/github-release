@@ -85,6 +85,31 @@ Please refer to https://help.github.com/articles/creating-an-access-token-for-co
 	log.Println("Done")
 }
 
+func uploadFile(uploadURL, path string) {
+	file, err := os.Open(path)
+	if err != nil {
+		log.Printf("Error: %s\n", err.Error())
+		return
+	}
+	defer file.Close()
+
+	size, err := fileSize(file)
+	if err != nil {
+		log.Printf("Error: %s\n", err.Error())
+		return
+	}
+
+	body, err := doRequest("POST", uploadURL+"?name="+file.Name(), "application/octet-stream", file, size)
+	if err != nil {
+		log.Printf("Error: %s\n", err.Error())
+	}
+
+	if DEBUG {
+		log.Println("========= UPLOAD RESPONSE ===========")
+		log.Println(string(body[:]))
+	}
+}
+
 // Creates a Github Release, attaching the given files as release assets
 // If a release already exist, up in Github, this function will attempt to attach the given files to it
 func CreateRelease(tag, branch, desc string, filepaths []string) {
@@ -125,29 +150,7 @@ func CreateRelease(tag, branch, desc string, filepaths []string) {
 	for i := range filepaths {
 		wg.Add(1)
 		func(index int) {
-			file, err := os.Open(filepaths[i])
-			if err != nil {
-				log.Printf("Error: %s\n", err.Error())
-				return
-			}
-			defer file.Close()
-
-			size, err := fileSize(file)
-			if err != nil {
-				log.Printf("Error: %s\n", err.Error())
-				return
-			}
-
-			body, err := doRequest("POST", uploadURL+"?name="+file.Name(), "application/octet-stream", file, size)
-			if err != nil {
-				log.Printf("Error: %s\n", err.Error())
-			}
-
-			if DEBUG {
-				log.Println("========= UPLOAD RESPONSE ===========")
-				log.Println(string(body[:]))
-			}
-
+			uploadFile(uploadURL, filepaths[index])
 			wg.Done()
 		}(i)
 	}
