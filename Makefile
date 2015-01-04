@@ -1,9 +1,13 @@
 NAME := github-release
-VERSION := v1.0.2
+VERSION := v1.0.3
 
 compile:
 	@rm -rf build/
 	@gox -ldflags "-X main.Version $(VERSION)" \
+	-os="darwin" \
+	-os="linux" \
+	-os="windows" \
+	-os="solaris" \
 	-output "build/{{.Dir}}_$(VERSION)_{{.OS}}_{{.Arch}}/$(NAME)"
 
 install:
@@ -17,7 +21,7 @@ dist: compile
 	$(eval FILES := $(shell ls build))
 	@rm -rf dist/
 	@mkdir dist/
-	for f in $(FILES); do \
+	@for f in $(FILES); do \
 		(cd $(shell pwd)/build/$$f && tar -cvzf ../../dist/$$f.tar.gz *); \
 		(cd $(shell pwd)/dist && shasum -a 512 $$f.tar.gz > $$f.sha512); \
 		echo $$f; \
