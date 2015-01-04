@@ -4,6 +4,7 @@ Yet another Github release command line tool. This one, though, is much more min
 
 ```
 Github command line release tool.
+
 Usage:
   github-release <user/repo> <tag> <branch> <description> <files>
 
@@ -13,6 +14,7 @@ Parameters:
   <branch>: Reference from where to create the provided <tag>, if it does not exist
   <description>: The release description
   <files>: Glob pattern describing the list of files to include in the release
+
 Options:
   -version: Displays version
 
