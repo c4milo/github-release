@@ -58,12 +58,21 @@ func init() {
 
 var usage string = `Github command line release tool.
 Usage:
-	gh-release <user/repo> <tag> <branch> <description> <files>
+	github-release <user/repo> <tag> <branch> <description> <files>
 
-	<files> can be specified using glob patterns.
-
+Parameters:
+	<user/repo>: Github user and repository
+	<tag>: Used to created the release. It is also used as the release's name
+	<branch>: Reference from where to create the provided <tag>, if it does not exist
+	<description>: The release description
+	<files>: Glob pattern describing the list of files to include in the release
 Options:
 	-version: Displays version
+
+Before using this tool make sure you set the environment variable GITHUB_TOKEN
+with a valid Github token and correct authorization scopes to allow you to create releases
+in your project.
+
 `
 
 func main() {
