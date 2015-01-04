@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -21,7 +22,8 @@ var (
 	GithubUser        string
 	GithubRepo        string
 	GithubAPIEndpoint string
-	DEBUG             bool
+	Version           string
+	Debug             bool
 )
 
 type Release struct {
@@ -34,25 +36,38 @@ type Release struct {
 	Prerelease bool   `json:"prerelease"`
 }
 
+var verFlag bool
+
 func init() {
 	log.SetFlags(0)
 
-	DEBUG, _ = strconv.ParseBool(os.Getenv("DEBUG"))
+	Debug, _ = strconv.ParseBool(os.Getenv("DEBUG"))
 
 	GithubToken = os.Getenv("GITHUB_TOKEN")
 	GithubUser = os.Getenv("GITHUB_USER")
 	GithubRepo = os.Getenv("GITHUB_REPO")
 	GithubAPIEndpoint = os.Getenv("GITHUB_API")
+
+	flag.BoolVar(&verFlag, "version", false, "-version")
+	flag.Parse()
 }
 
-var usage string = `Github release tool.
+var usage string = `Github command line release tool.
 Usage:
 	gh-release <user/repo> <tag> <branch> <description> <files>
 
-<files> can be specified using glob patterns.
+	<files> can be specified using glob patterns.
+
+Options:
+	-version: Displays version
 `
 
 func main() {
+	if verFlag {
+		log.Println(Version)
+		return
+	}
+
 	if len(os.Args) < 6 {
 		log.Fatal(usage)
 	}
@@ -72,9 +87,19 @@ Please refer to https://help.github.com/articles/creating-an-access-token-for-co
 	GithubRepo = userRepo[1]
 	GithubAPIEndpoint = fmt.Sprintf("https://api.github.com/repos/%s/%s", GithubUser, GithubRepo)
 
+	if Debug {
+		log.Println("Glob pattern received: ")
+		log.Println(os.Args[5])
+	}
+
 	filepaths, err := filepath.Glob(os.Args[5])
 	if err != nil {
-		log.Fatalf("Error: Invalid glob pattern: %s\n", os.Args[3])
+		log.Fatalf("Error: Invalid glob pattern: %s\n", os.Args[5])
+	}
+
+	if Debug {
+		log.Println("Expanded glob pattern: ")
+		log.Printf("%v\n", filepaths)
 	}
 
 	tag := os.Args[2]
@@ -104,7 +129,7 @@ func uploadFile(uploadURL, path string) {
 		log.Printf("Error: %s\n", err.Error())
 	}
 
-	if DEBUG {
+	if Debug {
 		log.Println("========= UPLOAD RESPONSE ===========")
 		log.Println(string(body[:]))
 	}
@@ -177,7 +202,7 @@ func doRequest(method, url, contentType string, reqBody io.Reader, bodySize int6
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
 	req.ContentLength = bodySize
 
-	if DEBUG {
+	if Debug {
 		log.Println("================ REQUEST DUMP ==================")
 		dump, err := httputil.DumpRequestOut(req, true)
 		if err != nil {
@@ -188,7 +213,7 @@ func doRequest(method, url, contentType string, reqBody io.Reader, bodySize int6
 
 	resp, err := http.DefaultClient.Do(req)
 
-	if DEBUG {
+	if Debug {
 		log.Println("================ RESPONSE DUMP ==================")
 		dump, err := httputil.DumpResponse(resp, true)
 		if err != nil {
