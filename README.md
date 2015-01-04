@@ -5,7 +5,7 @@ Yet another Github release command line tool. This one, though, is much more min
 ```
 Github release tool.
 Usage:
-	gh-release <user/repo> <tag> <branch> <description> <files>
+	github-release <user/repo> <tag> <branch> <description> <files>
 
 <files> can be specified using glob patterns.
 ```
