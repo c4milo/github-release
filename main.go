@@ -124,6 +124,7 @@ func uploadFile(uploadURL, path string) {
 		return
 	}
 
+	log.Printf("Uploading %s...\n", file.Name())
 	body, err := doRequest("POST", uploadURL+"?name="+file.Name(), "application/octet-stream", file, size)
 	if err != nil {
 		log.Printf("Error: %s\n", err.Error())
