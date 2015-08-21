@@ -1,4 +1,5 @@
 # github-release
+[![Build Status](https://travis-ci.org/c4milo/github-release.svg?branch=master)](https://travis-ci.org/c4milo/github-release)
 
 Yet another Github release command line tool. This one, though, is much more minimalistic and simple to use.
 
