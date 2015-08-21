@@ -38,5 +38,6 @@ License: http://mozilla.org/MPL/2.0/
 ### Examples
 Feel free to inspect this project's [Makefile](https://github.com/c4milo/github-release/blob/master/Makefile) for an example on how this tool can be used to create releases like this:
 
-![](https://cldup.com/lTTZG_KQXI.png)
+![](https://cldup.com/6Slplyys6X.png)
+
  
