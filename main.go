@@ -22,14 +22,16 @@ import (
 )
 
 var (
-	GithubToken       string
-	GithubUser        string
-	GithubRepo        string
-	GithubAPIEndpoint string
-	Version           string
-	Debug             bool
+	githubToken       string
+	githubUser        string
+	githubRepo        string
+	githubAPIEndpoint string
+	// Version gets initialized in compilation time.
+	Version string
+	debug   bool
 )
 
+// Release represents a Github Release.
 type Release struct {
 	UploadURL  string `json:"upload_url,omitempty"`
 	TagName    string `json:"tag_name"`
@@ -45,28 +47,29 @@ var verFlag bool
 func init() {
 	log.SetFlags(0)
 
-	Debug, _ = strconv.ParseBool(os.Getenv("DEBUG"))
+	debug, _ = strconv.ParseBool(os.Getenv("DEBUG"))
 
-	GithubToken = os.Getenv("GITHUB_TOKEN")
-	GithubUser = os.Getenv("GITHUB_USER")
-	GithubRepo = os.Getenv("GITHUB_REPO")
-	GithubAPIEndpoint = os.Getenv("GITHUB_API")
+	githubToken = os.Getenv("GITHUB_TOKEN")
+	githubUser = os.Getenv("GITHUB_USER")
+	githubRepo = os.Getenv("GITHUB_REPO")
+	githubAPIEndpoint = os.Getenv("GITHUB_API")
 
 	flag.BoolVar(&verFlag, "version", false, "-version")
 	flag.Parse()
 }
 
-var usage string = `Github command line release tool.
+var usage = `Github command line release tool.
 
 Usage:
-	github-release <user/repo> <tag> <branch> <description> <files>
+	github-release <user/repo> <tag> <branch> <description> "<files>"
 
 Parameters:
 	<user/repo>: Github user and repository
 	<tag>: Used to created the release. It is also used as the release's name
 	<branch>: Reference from where to create the provided <tag>, if it does not exist
 	<description>: The release description
-	<files>: Glob pattern describing the list of files to include in the release
+	<files>: Glob pattern describing the list of files to include in the release.
+			Make sure you enclose it in quotes to avoid the shell expanding the glob pattern.
 
 Options:
 	-version: Displays version
@@ -80,7 +83,7 @@ Environment variables:
 
 Before using this tool make sure you set the environment variable GITHUB_TOKEN
 with a valid Github token and correct authorization scopes to allow you to create releases
-in your project. For more information about creating Github tokens please read the 
+in your project. For more information about creating Github tokens please read the
 official Github documentation at https://help.github.com/articles/creating-an-access-token-for-command-line-use/
 
 Author: https://github.com/c4milo
@@ -103,16 +106,16 @@ func main() {
 		log.Fatal(usage)
 	}
 
-	if GithubToken == "" {
+	if githubToken == "" {
 		log.Fatal(`Error: GITHUB_TOKEN environment variable is not set.
 Please refer to https://help.github.com/articles/creating-an-access-token-for-command-line-use/ for more help\n`)
 	}
 
-	GithubUser = userRepo[0]
-	GithubRepo = userRepo[1]
-	GithubAPIEndpoint = fmt.Sprintf("https://api.github.com/repos/%s/%s", GithubUser, GithubRepo)
+	githubUser = userRepo[0]
+	githubRepo = userRepo[1]
+	githubAPIEndpoint = fmt.Sprintf("https://api.github.com/repos/%s/%s", githubUser, githubRepo)
 
-	if Debug {
+	if debug {
 		log.Println("Glob pattern received: ")
 		log.Println(os.Args[5])
 	}
@@ -122,7 +125,7 @@ Please refer to https://help.github.com/articles/creating-an-access-token-for-co
 		log.Fatalf("Error: Invalid glob pattern: %s\n", os.Args[5])
 	}
 
-	if Debug {
+	if debug {
 		log.Println("Expanded glob pattern: ")
 		log.Printf("%v\n", filepaths)
 	}
@@ -156,16 +159,16 @@ func uploadFile(uploadURL, path string) {
 		log.Printf("Error: %s\n", err.Error())
 	}
 
-	if Debug {
+	if debug {
 		log.Println("========= UPLOAD RESPONSE ===========")
 		log.Println(string(body[:]))
 	}
 }
 
-// Creates a Github Release, attaching the given files as release assets
-// If a release already exist, up in Github, this function will attempt to attach the given files to it
+// CreateRelease creates a Github Release, attaching the given files as release assets
+// If a release already exist, up in Github, this function will attempt to attach the given files to it.
 func CreateRelease(tag, branch, desc string, filepaths []string) {
-	endpoint := fmt.Sprintf("%s/releases", GithubAPIEndpoint)
+	endpoint := fmt.Sprintf("%s/releases", githubAPIEndpoint)
 
 	release := Release{
 		TagName:    tag,
@@ -224,12 +227,12 @@ func doRequest(method, url, contentType string, reqBody io.Reader, bodySize int6
 		return nil, err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", GithubToken))
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", githubToken))
 	req.Header.Set("Content-type", contentType)
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
 	req.ContentLength = bodySize
 
-	if Debug {
+	if debug {
 		log.Println("================ REQUEST DUMP ==================")
 		dump, err := httputil.DumpRequestOut(req, true)
 		if err != nil {
@@ -240,7 +243,7 @@ func doRequest(method, url, contentType string, reqBody io.Reader, bodySize int6
 
 	resp, err := http.DefaultClient.Do(req)
 
-	if Debug {
+	if debug {
 		log.Println("================ RESPONSE DUMP ==================")
 		dump, err := httputil.DumpResponse(resp, true)
 		if err != nil {
