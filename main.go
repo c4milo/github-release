@@ -69,7 +69,7 @@ Parameters:
 	<branch>: Reference from where to create the provided <tag>, if it does not exist
 	<description>: The release description
 	<files>: Glob pattern describing the list of files to include in the release.
-			Make sure you enclose it in quotes to avoid the shell expanding the glob pattern.
+	Make sure you enclose it in quotes to avoid the shell expanding the glob pattern.
 
 Options:
 	-version: Displays version
