@@ -108,7 +108,7 @@ func main() {
 
 	if githubToken == "" {
 		log.Fatal(`Error: GITHUB_TOKEN environment variable is not set.
-Please refer to https://help.github.com/articles/creating-an-access-token-for-command-line-use/ for more help\n`)
+Please refer to https://help.github.com/articles/creating-an-access-token-for-command-line-use/ for more help`)
 	}
 
 	githubUser = userRepo[0]
