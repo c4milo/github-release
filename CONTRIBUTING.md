@@ -30,7 +30,7 @@ Go is unlike any other language in that it forces a specific development workflo
 ### Pull Requests
 * Please be generous describing your changes.
 * Although it is highly suggested to include tests, they are not a hard requirement in order to get your contributions accepted. 
-* Keep pull requets small so core developers can review them quickly.
+* Keep pull requests small so core developers can review them quickly.
 * Unlike other projects, we are not going to nitpick your contributions. If your pull request is correct, we are going to merge and address the small details by ourselves. There is no point on delaying contributions due to little and unimportant details.
 
 ### Workflow for third-party code contributions
@@ -45,7 +45,7 @@ Go is unlike any other language in that it forces a specific development workflo
 
 
 ### Workflow for core developers
-Since core developers usually have access to the upstream repository, there is no need for having a workflow like the one for thid-party contributors.
+Since core developers usually have access to the upstream repository, there is no need for having a workflow like the one for third-party contributors.
 
 * Get the package using "go get": `go get github.com/c4milo/github-release`
 * Create a branch for making your changes, then commit them.
