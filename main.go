@@ -79,7 +79,7 @@ Environment variables:
   GITHUB_TOKEN: Must be set in order to interact with Github's API
   GITHUB_USER: Just in case you want an alternative way of providing your github user
   GITHUB_REPO: Just in case you want an alternative way of providing your github repo
-  GITHUB_API: Github API endpoint. Set to https://api.github.com/repos/:github-user/:github-repo" by default
+  GITHUB_API: Github API endpoint. Set to https://api.github.com/repos/:github-user/:github-repo by default
 
 Before using this tool make sure you set the environment variable GITHUB_TOKEN
 with a valid Github token and correct authorization scopes to allow you to create releases
