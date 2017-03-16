@@ -54,6 +54,10 @@ func init() {
 	githubRepo = os.Getenv("GITHUB_REPO")
 	githubAPIEndpoint = os.Getenv("GITHUB_API")
 
+	if githubAPIEndpoint == "" {
+		githubAPIEndpoint = "https://api.github.com"
+	}
+
 	flag.BoolVar(&verFlag, "version", false, "-version")
 	flag.Parse()
 }
@@ -113,7 +117,7 @@ Please refer to https://help.github.com/articles/creating-an-access-token-for-co
 
 	githubUser = userRepo[0]
 	githubRepo = userRepo[1]
-	githubAPIEndpoint = fmt.Sprintf("https://api.github.com/repos/%s/%s", githubUser, githubRepo)
+	githubAPIEndpoint = fmt.Sprintf("%s/repos/%s/%s", githubAPIEndpoint, githubUser, githubRepo)
 
 	if debug {
 		log.Println("Glob pattern received: ")
