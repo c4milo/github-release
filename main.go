@@ -191,6 +191,14 @@ func CreateRelease(tag, branch, desc string, filepaths []string) {
 	releaseBuffer := bytes.NewBuffer(releaseData)
 
 	data, err := doRequest("POST", endpoint, "application/json", releaseBuffer, int64(releaseBuffer.Len()))
+
+	if err != nil && data != nil {
+		log.Println(err)
+		log.Println("Trying again assuming release already exists.")
+		endpoint = fmt.Sprintf("%s/releases/tags/%s", githubAPIEndpoint, tag)
+		data, err = doRequest("GET", endpoint, "application/json", nil, int64(0))
+	}
+
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -268,7 +276,7 @@ func doRequest(method, url, contentType string, reqBody io.Reader, bodySize int6
 	}
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("Github returned an error:\n Code: %s. \n Body: %s", resp.Status, respBody)
+		return respBody, fmt.Errorf("Github returned an error:\n Code: %s. \n Body: %s", resp.Status, respBody)
 	}
 
 	return respBody, nil
