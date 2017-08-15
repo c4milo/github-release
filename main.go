@@ -43,6 +43,7 @@ type Release struct {
 }
 
 var verFlag bool
+var prereleaseFlag bool
 
 func init() {
 	log.SetFlags(0)
@@ -59,6 +60,7 @@ func init() {
 	}
 
 	flag.BoolVar(&verFlag, "version", false, "-version")
+	flag.BoolVar(&prereleaseFlag, "prerelease", false, "-prerelease")
 	flag.Parse()
 }
 
@@ -77,6 +79,7 @@ Parameters:
 
 Options:
 	-version: Displays version
+	-prerelease: Identify the release as a prerelease
 
 Environment variables:
   DEBUG: Allows you to run github-release in debugging mode. DO NOT do this if you are attempting to upload big files.
@@ -100,13 +103,14 @@ func main() {
 		return
 	}
 
-	if len(os.Args) < 6 {
+	if flag.NArg() != 5 {
+		log.Printf("Error: Invalid number of arguments (got %d, expected 5)\n\n", flag.NArg())
 		log.Fatal(usage)
 	}
 
-	userRepo := strings.Split(os.Args[1], "/")
+	userRepo := strings.Split(flag.Arg(0), "/")
 	if len(userRepo) != 2 {
-		log.Printf("Error: Invalid format used for username and repository: %s\n\n", os.Args[1])
+		log.Printf("Error: Invalid format used for username and repository: %s\n\n", flag.Arg(0))
 		log.Fatal(usage)
 	}
 
@@ -121,12 +125,12 @@ Please refer to https://help.github.com/articles/creating-an-access-token-for-co
 
 	if debug {
 		log.Println("Glob pattern received: ")
-		log.Println(os.Args[5])
+		log.Println(flag.Arg(4))
 	}
 
-	filepaths, err := filepath.Glob(os.Args[5])
+	filepaths, err := filepath.Glob(flag.Arg(4))
 	if err != nil {
-		log.Fatalf("Error: Invalid glob pattern: %s\n", os.Args[5])
+		log.Fatalf("Error: Invalid glob pattern: %s\n", flag.Arg(4))
 	}
 
 	if debug {
@@ -134,11 +138,19 @@ Please refer to https://help.github.com/articles/creating-an-access-token-for-co
 		log.Printf("%v\n", filepaths)
 	}
 
-	tag := os.Args[2]
-	branch := os.Args[3]
-	desc := os.Args[4]
+	tag := flag.Arg(1)
+	branch := flag.Arg(2)
+	desc := flag.Arg(3)
 
-	CreateRelease(tag, branch, desc, filepaths)
+	release := Release{
+		TagName:    tag,
+		Name:       tag,
+		Prerelease: prereleaseFlag,
+		Draft:      false,
+		Branch:     branch,
+		Body:       desc,
+	}
+	publishRelease(release, filepaths)
 	log.Println("Done")
 }
 
@@ -172,8 +184,6 @@ func uploadFile(uploadURL, path string) {
 // CreateRelease creates a Github Release, attaching the given files as release assets
 // If a release already exist, up in Github, this function will attempt to attach the given files to it.
 func CreateRelease(tag, branch, desc string, filepaths []string) {
-	endpoint := fmt.Sprintf("%s/releases", githubAPIEndpoint)
-
 	release := Release{
 		TagName:    tag,
 		Name:       tag,
@@ -182,7 +192,11 @@ func CreateRelease(tag, branch, desc string, filepaths []string) {
 		Branch:     branch,
 		Body:       desc,
 	}
+	publishRelease(release, filepaths)
+}
 
+func publishRelease(release Release, filepaths []string) {
+	endpoint := fmt.Sprintf("%s/releases", githubAPIEndpoint)
 	releaseData, err := json.Marshal(release)
 	if err != nil {
 		log.Fatalln(err)
@@ -195,7 +209,7 @@ func CreateRelease(tag, branch, desc string, filepaths []string) {
 	if err != nil && data != nil {
 		log.Println(err)
 		log.Println("Trying again assuming release already exists.")
-		endpoint = fmt.Sprintf("%s/releases/tags/%s", githubAPIEndpoint, tag)
+		endpoint = fmt.Sprintf("%s/releases/tags/%s", githubAPIEndpoint, release.TagName)
 		data, err = doRequest("GET", endpoint, "application/json", nil, int64(0))
 	}
 
