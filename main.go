@@ -100,13 +100,14 @@ func main() {
 		return
 	}
 
-	if len(os.Args) < 6 {
+	if flag.NArg() != 5 {
+		log.Printf("Error: Invalid number of arguments (got %d, expected 5)\n\n", flag.NArg())
 		log.Fatal(usage)
 	}
 
-	userRepo := strings.Split(os.Args[1], "/")
+	userRepo := strings.Split(flag.Arg(0), "/")
 	if len(userRepo) != 2 {
-		log.Printf("Error: Invalid format used for username and repository: %s\n\n", os.Args[1])
+		log.Printf("Error: Invalid format used for username and repository: %s\n\n", flag.Arg(0))
 		log.Fatal(usage)
 	}
 
@@ -121,12 +122,12 @@ Please refer to https://help.github.com/articles/creating-an-access-token-for-co
 
 	if debug {
 		log.Println("Glob pattern received: ")
-		log.Println(os.Args[5])
+		log.Println(flag.Arg(4))
 	}
 
-	filepaths, err := filepath.Glob(os.Args[5])
+	filepaths, err := filepath.Glob(flag.Arg(4))
 	if err != nil {
-		log.Fatalf("Error: Invalid glob pattern: %s\n", os.Args[5])
+		log.Fatalf("Error: Invalid glob pattern: %s\n", flag.Arg(4))
 	}
 
 	if debug {
@@ -134,9 +135,9 @@ Please refer to https://help.github.com/articles/creating-an-access-token-for-co
 		log.Printf("%v\n", filepaths)
 	}
 
-	tag := os.Args[2]
-	branch := os.Args[3]
-	desc := os.Args[4]
+	tag := flag.Arg(1)
+	branch := flag.Arg(2)
+	desc := flag.Arg(3)
 
 	CreateRelease(tag, branch, desc, filepaths)
 	log.Println("Done")
