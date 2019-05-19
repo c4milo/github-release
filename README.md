@@ -20,6 +20,7 @@ Parameters:
 Options:
 	-version: Displays version
 	-prerelease: Identify the release as a prerelease
+	-draft: Set as a draft release
 
 Environment variables:
   DEBUG: Allows you to run github-release in debugging mode. DO NOT do this if you are attempting to upload big files.
