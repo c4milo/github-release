@@ -44,6 +44,7 @@ type Release struct {
 
 var verFlag bool
 var prereleaseFlag bool
+var draftFlag bool
 
 func init() {
 	log.SetFlags(0)
@@ -61,6 +62,7 @@ func init() {
 
 	flag.BoolVar(&verFlag, "version", false, "-version")
 	flag.BoolVar(&prereleaseFlag, "prerelease", false, "-prerelease")
+	flag.BoolVar(&draftFlag, "draft", false, "-draft")
 	flag.Parse()
 }
 
@@ -80,6 +82,7 @@ Parameters:
 Options:
 	-version: Displays version
 	-prerelease: Identify the release as a prerelease
+	-draft: Save as draft, don't publish
 
 Environment variables:
   DEBUG: Allows you to run github-release in debugging mode. DO NOT do this if you are attempting to upload big files.
@@ -146,7 +149,7 @@ Please refer to https://help.github.com/articles/creating-an-access-token-for-co
 		TagName:    tag,
 		Name:       tag,
 		Prerelease: prereleaseFlag,
-		Draft:      false,
+		Draft:      draftFlag,
 		Branch:     branch,
 		Body:       desc,
 	}
