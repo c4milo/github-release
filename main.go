@@ -33,6 +33,7 @@ var (
 
 // Release represents a Github Release.
 type Release struct {
+	Id         int    `json:"id,omitempty"`
 	UploadURL  string `json:"upload_url,omitempty"`
 	TagName    string `json:"tag_name"`
 	Branch     string `json:"target_commitish"`
@@ -45,6 +46,7 @@ type Release struct {
 var verFlag bool
 var prereleaseFlag bool
 var draftFlag bool
+var recreateDraftFlag bool
 
 func init() {
 	log.SetFlags(0)
@@ -63,6 +65,7 @@ func init() {
 	flag.BoolVar(&verFlag, "version", false, "-version")
 	flag.BoolVar(&prereleaseFlag, "prerelease", false, "-prerelease")
 	flag.BoolVar(&draftFlag, "draft", false, "-draft")
+	flag.BoolVar(&recreateDraftFlag, "recreateDraft", false, "-recreateDraft")
 	flag.Parse()
 }
 
@@ -83,6 +86,7 @@ Options:
 	-version: Displays version
 	-prerelease: Identify the release as a prerelease
 	-draft: Save as draft, don't publish
+	-recreateDraft: Deletes the previous release drafts matching the tag of the release, if they exist
 
 Environment variables:
   DEBUG: Allows you to run github-release in debugging mode. DO NOT do this if you are attempting to upload big files.
@@ -198,14 +202,53 @@ func CreateRelease(tag, branch, desc string, filepaths []string) {
 	publishRelease(release, filepaths)
 }
 
+func deleteDraftReleases(tag string) {
+	log.Println("Deleting old draft releases, if they exists")
+	deleteDraftReleasesRec(tag, 1)
+}
+
+func deleteDraftReleasesRec(tag string, page int) {
+	endpoint := fmt.Sprintf("%s/releases?per_page=100&page=%d", githubAPIEndpoint, page)
+	data, err := doRequest("GET", endpoint, "application/json", nil, 0)
+	if err != nil {
+		log.Println(err)
+		log.Println("Failed to get old release drafts to delete, creating new release")
+		return
+	}
+	releases := []Release{}
+	err = json.Unmarshal(data, &releases)
+	if err != nil {
+		log.Println(err)
+		log.Println("Failed to unmarshal old release drafts to delete, creating new release")
+		return
+	}
+	for _, release := range releases {
+		if release.Draft && release.TagName == tag {
+			log.Printf("Deleting release draft with tag %s and id %d\n", release.TagName, release.Id)
+			endpoint = fmt.Sprintf("%s/releases/%d", githubAPIEndpoint, release.Id)
+			_, err = doRequest("DELETE", endpoint, "application/json", nil, 0)
+			if err != nil {
+				log.Println(err)
+				log.Printf("Failed to delete old release draft with id %d\n", release.Id)
+			}
+		}
+	}
+	if len(releases) == 100 {
+		deleteDraftReleasesRec(tag, page+1)
+	}
+}
+
 func publishRelease(release Release, filepaths []string) {
 	endpoint := fmt.Sprintf("%s/releases", githubAPIEndpoint)
 	releaseData, err := json.Marshal(release)
 	if err != nil {
 		log.Fatalln(err)
 	}
-
 	releaseBuffer := bytes.NewBuffer(releaseData)
+
+	if recreateDraftFlag {
+		deleteDraftReleases(release.TagName)
+	}
 
 	data, err := doRequest("POST", endpoint, "application/json", releaseBuffer, int64(releaseBuffer.Len()))
 
@@ -213,9 +256,8 @@ func publishRelease(release Release, filepaths []string) {
 		log.Println(err)
 		log.Println("Trying again assuming release already exists.")
 		endpoint = fmt.Sprintf("%s/releases/tags/%s", githubAPIEndpoint, release.TagName)
-		data, err = doRequest("GET", endpoint, "application/json", nil, int64(0))
+		data, err = doRequest("GET", endpoint, "application/json", nil, 0)
 	}
-
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -292,7 +334,7 @@ func doRequest(method, url, contentType string, reqBody io.Reader, bodySize int6
 		return nil, err
 	}
 
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusCreated {
 		return respBody, fmt.Errorf("Github returned an error:\n Code: %s. \n Body: %s", resp.Status, respBody)
 	}
 
